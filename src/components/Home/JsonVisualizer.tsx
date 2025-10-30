@@ -41,7 +41,7 @@ export const JsonVisualizer = ({
           <Background color={"#444"} gap={16} />
           <Controls />
           <MiniMap
-            nodeColor={(node) => node?.style?.background}
+            nodeColor={(node) => node?.style?.background as string}
             maskColor={"rgba(0, 0, 0, 0.6)"}
           />
           <DownloadChartButton />

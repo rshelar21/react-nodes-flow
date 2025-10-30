@@ -4,6 +4,8 @@ import "reactflow/dist/style.css";
 import { JsonEditor, JsonVisualizer } from "../components";
 import { SearchBar } from "../components/Home/SearchBar";
 import { nodeColors } from "../constants";
+import type { Node, Edge } from "reactflow";
+import type { NodeType } from "../constants/nodes.constant";
 
 const sampleJSON = `{
   "user": {
@@ -27,9 +29,9 @@ export const Home = () => {
   const [searchMessage, setSearchMessage] = useState("");
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [parsedData, setParsedData] = useState(null);
+  const [_, setParsedData] = useState(null);
 
-  const getNodeType = (value: string | number | {} | []) => {
+  const getNodeType = (value: unknown) => {
     if (value === null) return "primitive";
     if (Array.isArray(value)) return "array";
     if (typeof value === "object") return "object";
@@ -38,7 +40,7 @@ export const Home = () => {
 
   const handleBuildTree = useCallback(
     (
-      data: any,
+      data: unknown,
       parentId: null | string = null,
       key = "root",
       path = "$",
@@ -82,7 +84,7 @@ export const Home = () => {
           fontSize: "12px",
           fontWeight: "500",
           minWidth: "80px",
-          textAlign: "center",
+          textAlign: "center" as "center",
         },
       });
 
@@ -99,7 +101,7 @@ export const Home = () => {
         });
       }
 
-      if (nodeType === "object") {
+      if (nodeType === "object" && typeof data === "object" && data !== null) {
         Object.entries(data).forEach(([childKey, childValue]) => {
           const childResult = handleBuildTree(
             childValue,
@@ -111,7 +113,7 @@ export const Home = () => {
           nodes.push(...childResult.nodes);
           edges.push(...childResult.edges);
         });
-      } else if (nodeType === "array") {
+      } else if (nodeType === "array" && Array.isArray(data)) {
         data.forEach((item, index) => {
           const childResult = handleBuildTree(
             item,
@@ -130,8 +132,8 @@ export const Home = () => {
     []
   );
 
-  const layoutNodes = (nodes: any, edges: any) => {
-    const nodeMap = new Map(nodes.map((n: any) => [n.id, n]));
+  const layoutNodes = (nodes: Node[], edges: Edge[]) => {
+    const nodeMap = new Map<string, Node>(nodes.map((n: any) => [n.id, n]));
     const childrenMap = new Map();
 
     edges.forEach((edge: any) => {
@@ -143,13 +145,13 @@ export const Home = () => {
 
     const levelWidth = 180;
     const levelHeight = 100;
-    const levels = new Map();
+    const levels = new Map<number, string[]>();
 
     const calculateLevels = (nodeId: any, level = 0) => {
       if (!levels.has(level)) {
         levels.set(level, []);
       }
-      levels.get(level).push(nodeId);
+      levels.get(level)!.push(nodeId);
 
       const children = childrenMap.get(nodeId) || [];
       children.forEach((childId: any) => calculateLevels(childId, level + 1));
@@ -220,7 +222,7 @@ export const Home = () => {
           ...node.style,
           background: isMatch
             ? nodeColors.highlighted
-            : nodeColors[node.data.type],
+            : nodeColors[node.data.type as NodeType],
           border: isMatch ? "3px solid #dc2626" : "2px solid #fff",
         },
       };
@@ -251,7 +253,7 @@ export const Home = () => {
       ...node,
       style: {
         ...node.style,
-        background: nodeColors[node.data.type], // restore default
+        background: nodeColors[node.data.type as NodeType], // restore default
         border: "2px solid #fff",
       },
     }));
